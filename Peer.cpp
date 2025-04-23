@@ -17,8 +17,10 @@ Peer::Peer() {
 
 void Peer::setID(int ID) {
     id = ID;
-    std::string fileName = "log_peer_" + std::to_string(ID) + ".log";
-    log.open(fileName, std::ofstream::out | std::ofstream::app);
+    std::fstream temp("log_peer_" + std::to_string(ID) + ".log");
+    log.open("log_peer_" + std::to_string(ID) + ".log", std::ofstream::out | std::ofstream::app);
+    //std::string fileName = "log_peer_" + std::to_string(ID) + ".log";
+    //log.open(fileName, std::ofstream::out | std::ofstream::app);
 }
 
 void Peer::initBitfield(int bit) {
@@ -27,20 +29,37 @@ void Peer::initBitfield(int bit) {
     for (int i = 0; i < chunks; i++) bitField += std::to_string(bit);
 }
 
+std::string Peer::intToBytes(int num) {
+    std::string out(4, '\0');
+    out[0] = (num >> 24) & 0xFF;
+    out[1] = (num >> 16) & 0xFF;
+    out[2] = (num >> 8) & 0xFF;
+    out[3] = num & 0xFF;
+    return out;
+}
+
+int Peer::bytesToInt(std::string num) {
+    int out = ((unsigned char)num[0] << 24) |
+              ((unsigned char)num[1] << 16) |
+              ((unsigned char)num[2] << 8) |
+              ((unsigned char)num[3]);
+    return out;
+}
+
 std::string Peer::sendChoke() {
-    return "00010";
+    return "0";
 }
 
 std::string Peer::sendUnchoke() {
-    return "00011";
+    return "1";
 }
 
 std::string Peer::sendInterested() {
-    return "00012";
+    return "2";
 }
 
 std::string Peer::sendNotInterested() {
-    return "00013";
+    return "3";
 }
 
 std::string Peer::sendHave(int index) {
@@ -53,29 +72,13 @@ std::string Peer::sendHave(int index) {
 
 std::string Peer::sendBitfield() {
     int pieces = ceil(1.0 * fileSize/pieceSize);
-    bool zero = true;
-
-    for (int i = 0; i < pieces; i++) {
-        if (bitField.at(i) == '1') {
-            zero = false;
-            break;
-        }
-    }
-
-    if (!zero) {
-        std::string message = "5";
-        message += bitField;
-        std::string length = static_cast<char>(message.length()) + "";
-        while (length.length() < 4) length = '0' + length;
-        message = length + message;
-        return message;
-    }
-    return "";
+    std::string message = "5";
+    message += bitField;
+    return message;
 }
 
 std::string Peer::sendRequest(int index) {
     std::string message = "6" + static_cast<char>(index);
-    message = static_cast<char>(message.length()) + message;
     return message;
 }
 
@@ -91,7 +94,6 @@ std::string Peer::checkIfInterested(peerInfo* peer) {
 std::string Peer::sendPiece(int index) {
     std::string message = "7" + static_cast<char>(index);
     message += getPiece(index);
-    message = static_cast<char>(message.length()) + message;
     return message;
 }
 

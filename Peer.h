@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <chrono>
 #include <pthread.h>
+#include <algorithm>
+#include <cstdint>
 
 class Peer {
 
@@ -20,6 +22,7 @@ public:
         int port;
         std::string bitfield;
         int sock;
+        bool interested;
     };
 
     std::fstream log;
@@ -30,6 +33,9 @@ public:
     std::string bitField;
     std::vector<peerInfo*> preferredPeers;
     peerInfo* optUnchoked;
+    
+    std::string intToBytes(int num);
+    int bytesToInt(std::string num);
 
     int numPreferred;
     int unchokingInt;
