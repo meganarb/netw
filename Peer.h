@@ -10,6 +10,8 @@
 #include <pthread.h>
 #include <algorithm>
 #include <cstdint>
+#include <random>
+#include <bits/stdc++.h>
 
 class Peer {
 
@@ -20,17 +22,31 @@ public:
         int id;
         std::string host;
         int port;
+        bool interested;
+        bool unchoked;
+        bool meUnchoked;
+        int piecesProvided;
         std::string bitfield;
         int sock;
-        bool interested;
     };
+    
+    bool complete;
+    bool unchoke;
+    bool optUnchoke;
+    pthread_mutex_t unchokeLock;
+    pthread_mutex_t optUnchokeLock;
 
-    std::fstream log;
+    std::ofstream log;
     pthread_mutex_t logLock{};
+    std::string pieceFolder;
 
     int id;
+    int host;
     int port;
     std::string bitField;
+    bool fullBitfield;
+    
+    std::vector<peerInfo*> allPeers;
     std::vector<peerInfo*> preferredPeers;
     peerInfo* optUnchoked;
     
@@ -47,6 +63,11 @@ public:
     Peer();
     void initBitfield(int bit);
     void setID(int ID);
+    
+    int splitFile();
+    
+    void changeUnchoked();
+    void changeOptimistic();
 
     static std::string sendChoke();
     static std::string sendUnchoke();
@@ -59,12 +80,16 @@ public:
 
     std::string checkIfInterested(peerInfo* peer);
     std::string getPiece(int piece);
+    int savePiece(int pieceNums, std::string buffer);
 
     // logging functions - logs into file log_peer_[peerID].log
+    int logCommonCFG();
+    int logPeerInfoCFG();
     int logConnectTo(peerInfo* peer);
     int logConnectFrom(peerInfo* peer);
-    int logPreferred(peerInfo* peer);
-    int logOptUnchoke(peerInfo* peer);
+    int logReceiveBitfield(peerInfo* peer);
+    int logPreferred();
+    int logOptUnchoke();
     int logUnchoke(peerInfo* peer);
     int logChoke(peerInfo* peer);
     int logHave(peerInfo* peer, int index);
